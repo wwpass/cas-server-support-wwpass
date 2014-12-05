@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.1.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+    
+    <security:debug />
+
+    <security:global-method-security jsr250-annotations="enabled" pre-post-annotations="enabled" secured-annotations="enabled" />
+    
+    <context:property-placeholder properties-ref="constants"/>
+
+    <bean id="constants"
+          class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="location" value="classpath:/config.properties" />
+    </bean>
+
+    <security:http  use-expressions="true" 
+                    entry-point-ref="casEntryPoint"
+                    authentication-manager-ref="authenticationManager">
+        <security:intercept-url pattern="/" access="permitAll" />
+        <security:intercept-url pattern="/register" access="permitAll" />
+        <security:intercept-url pattern="/register/**" access="permitAll" />
+        <security:intercept-url pattern="/**" access="isAuthenticated()" />
+        <security:intercept-url pattern="/admin" access="hasRole('admin')" />
+        <security:form-login />
+        <security:logout logout-success-url="/" delete-cookies="JSESSIONID"/>
+        <security:session-management invalid-session-url="/">
+            <security:concurrency-control max-sessions="1" error-if-maximum-exceeded="true" />
+        </security:session-management>
+        <security:custom-filter position="CAS_FILTER" ref="casFilter" />
+        <security:logout logout-success-url="/cas-logout.jsp"/>
+        <security:custom-filter ref="requestSingleLogoutFilter" before="LOGOUT_FILTER"/>
+        <security:custom-filter ref="singleLogoutFilter" before="CAS_FILTER"/>
+    </security:http>
+
+
+    
+
+    <security:authentication-manager id="authenticationManager">
+        <security:authentication-provider ref="casAuthenticationProvider" />
+    </security:authentication-manager>
+
+    <bean id="dataSource"
+          class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+
+        <property name="driverClassName" value="${db.driver.class.name}" />
+        <property name="url" value="${db.url}" />
+        <property name="username" value="${db.username}" />
+        <property name="password" value="${db.password}" />
+    </bean>
+    
+    <!--
+    You may specify only some of the users, who have access rights to this site.
+    Remember that username in this in-memory UserDetailsService and Principal returned from the CAS must be equal.
+    -->
+    <!--
+    <bean id="encoder" class="org.springframework.security.crypto.password.StandardPasswordEncoder"/>
+    
+    <security:user-service id="userDetailsService">
+        &lt;!&ndash; Password: "koala" for both &ndash;&gt;
+        <security:user name="user"
+                       password="4efe081594ce25ee4efd9f7067f7f678a347bccf2de201f3adf2a3eb544850b465b4e51cdc3fcdde"
+                       authorities="user"/>
+        <security:user name="admin"
+                       password="4efe081594ce25ee4efd9f7067f7f678a347bccf2de201f3adf2a3eb544850b465b4e51cdc3fcdde"
+                       authorities="admin"/>
+    </security:user-service>
+    -->
+    
+
+    <bean name="wwpassConnection" class="com.wwpass.connection.WWPassConnection">
+        <constructor-arg name="certFile" value="${wwpass.sp.cert.path}"/>
+        <constructor-arg name="keyFile" value="${wwpass.sp.key.path}"/>
+    </bean>
+    
+    <security:jdbc-user-service 
+            id="userDetailsService"
+            data-source-ref="dataSource"
+            users-by-username-query="select username,password,active 
+                                     from cas_users 
+                                     where username=?"
+            authorities-by-username-query="select u.username, r.role 
+                                           from user_roles r 
+                                               inner join cas_users u on u.userid = r.uid 
+                                           where u.username=?" />
+                                
+    
+    <bean id="casAuthenticationProvider"
+          class="org.springframework.security.cas.authentication.CasAuthenticationProvider">
+        <property name="authenticationUserDetailsService">
+            <bean class="org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper">
+                <constructor-arg ref="userDetailsService" />
+            </bean>
+        </property>
+        <property name="serviceProperties" ref="serviceProperties" />
+        <property name="ticketValidator">
+            <bean class="org.jasig.cas.client.validation.Cas20ProxyTicketValidator">
+                <constructor-arg value="${cas.url}"/>
+                <property name="acceptAnyProxy" value="true"/>
+            </bean>
+        </property>
+        <property name="key" value="cas-example"/>
+    </bean>
+
+    <context:component-scan base-package="com.wwpass.cas.example"/>
+
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/pages/"/>
+        <property name="suffix" value=".jsp"/>
+        <property name="exposedContextBeanNames">
+            <list><value>constants</value></list>
+        </property>
+    </bean>
+
+    <bean id="serviceProperties"
+          class="org.springframework.security.cas.ServiceProperties">
+        <property name="service"
+                  value="${app.url}/j_spring_cas_security_check"/>
+        <property name="sendRenew" value="false"/>
+        <property name="authenticateAllArtifacts" value="true"/>
+    </bean>
+
+    <bean id="casFilter"
+          class="org.springframework.security.cas.web.CasAuthenticationFilter">
+        <property name="authenticationManager" ref="authenticationManager"/>
+        <property name="proxyGrantingTicketStorage" ref="pgtStorage"/>
+        <property name="proxyReceptorUrl" value="/j_spring_cas_security_proxyreceptor"/>
+        <property name="authenticationDetailsSource">
+            <bean class="org.springframework.security.cas.web.authentication.ServiceAuthenticationDetailsSource">
+                <constructor-arg ref="serviceProperties"/>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="casEntryPoint"
+          class="org.springframework.security.cas.web.CasAuthenticationEntryPoint">
+        <property name="loginUrl" value="${cas.url}/login"/>
+        <property name="serviceProperties" ref="serviceProperties"/>
+    </bean>
+
+    <!-- This filter handles a Single Logout Request from the CAS Server -->
+    <bean id="singleLogoutFilter" class="org.jasig.cas.client.session.SingleSignOutFilter"/>
+    <!-- This filter redirects to the CAS Server to signal Single Logout should be performed -->
+    <bean id="requestSingleLogoutFilter"
+          class="org.springframework.security.web.authentication.logout.LogoutFilter">
+        <constructor-arg value="${cas.url}/logout"/>
+        <constructor-arg>
+            <bean class=
+                          "org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler"/>
+        </constructor-arg>
+        <property name="filterProcessesUrl" value="/j_spring_cas_security_logout"/>
+    </bean>
+
+    <!--
+   NOTE: In a real application you should not use an in memory implementation. You will also want
+         to ensure to clean up expired tickets by calling ProxyGrantingTicketStorage.cleanup()
+ -->
+    <bean id="pgtStorage" class="org.jasig.cas.client.proxy.ProxyGrantingTicketStorageImpl"/>
+    
+</beans>

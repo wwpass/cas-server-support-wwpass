@@ -1,0 +1,16 @@
+# CAS Server application URL
+cas.url = https://cas.example.com:8443/cas
+
+# This example application URL
+app.url = https://example.com:8443/cas-example
+
+# WWPass configuration
+wwpass.sp.name = example.com
+wwpass.sp.cert.path = /etc/ssl/certs/example.com.crt
+wwpass.sp.key.path = /etc/ssl/certs/example.com.key
+
+# JDBC configuration
+db.driver.class.name = com.mysql.jdbc.Driver
+db.url = jdbc:mysql://127.0.0.1/wwpass_cas
+db.username = cas
+db.password = changeit
