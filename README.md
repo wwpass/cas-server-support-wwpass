@@ -13,7 +13,7 @@ Installation & Configuration
 ============================
 
 ### Create a WWPass Developer Account
-Signup for a free account on [WWPass developers website](https://developers.wwpass.com/) and follow the [getting started](https://developers.wwpass.com/documentation) instructions to obtain WWPass credentials (WWPass certificate file and a private key file) for your CAS server: . 
+Signup for a free account on [WWPass developers website](https://developers.wwpass.com/) and follow the [getting started](https://developers.wwpass.com/documentation) instructions to obtain WWPass authorization credentials (WWPass certificate file and a private key file) for your CAS server: . 
 
 ### Build the server extension
 
@@ -54,9 +54,15 @@ cp $CFG_SRC/webapp/WEB-INF/deployerConfigContext.xml $CFG_DEST/src/main/webapp/W
 cp -r $CFG_SRC/webapp/css $CFG_DEST/src/main/webapp/
 cp -r $CFG_SRC/webapp/images $CFG_DEST/src/main/webapp/
 
+cp $CFG_SRC/pom.xml $CFG_DEST/
+
 cp $CFG_SRC/cas.properties /etc/cas/
 
-cp $CFG_SRC/pom.xml $CFG_DEST/
+# NOTE: next file comes from simple-cas4-overlay-template:
+
+cp $CFG_DEST/etc/log4j.xml /etc/cas/
+
+
 ```
 
 
@@ -69,6 +75,7 @@ wwpass.keyPath=/etc/ssl/certs/your_site.key
 
 wwpass.sp.name=your_site_name
 ```
+Now use `cas-server-support-wwpass/overlay-extra/sample-schema.sql` file to create the example user MySQL database 
 
 
 Finally compile CAS.war:
@@ -81,7 +88,7 @@ mvn clean package install
 You are done
 
 
-###Compiling Example CAS client
+### Compiling Example CAS client
 
 
 Goto **cas-example** directory provided with **cas-server-support-wwpass** and compile it as usually
@@ -97,15 +104,10 @@ The example app shares the MySQL user database with CAS server.
 Use `cas-server-support-wwpass/overlay-extra/sample-schema.sql` file to create the database.
 
 
-
-
-###Configuration details  
+### Configuration details  
 
 NOTE: some parts of configuration files correspond to particular MySQL-based example. 
 You will rather use your own user catalog. This MySQL configuration is just easy-to-understand example.
-
-To create the MySQL database use `cas-server-support-wwpass/overlay-extra/sample-schema.sql` file
-
 
 
 
@@ -338,10 +340,11 @@ Simply replace `viewLoginForm` **view-state**:
             <set name="viewScope.wwpassCommandName" value="'wwpassExtentedCredentials'" />
             <set name="viewScope.spName" value="'SDK%20Test'" />
         </on-entry>
-		<transition on="submit" bind="true" validate="true" to="realSubmit">
+        <transition on="submit" bind="true" validate="true" to="realSubmit">
             <evaluate expression="authenticationViaFormAction.doBind(flowRequestContext, flowScope.wwpassExtentedCredentials)" />
         </transition>
-	</view-state>
+    </view-state>
+    
 ```
 `credential` **var** replace with:
 ``` xml
@@ -359,5 +362,4 @@ And `realSubmit` **action-state** replace with:
     <transition on="error" to="generateLoginTicket" />
   </action-state>
 ```
-
 
