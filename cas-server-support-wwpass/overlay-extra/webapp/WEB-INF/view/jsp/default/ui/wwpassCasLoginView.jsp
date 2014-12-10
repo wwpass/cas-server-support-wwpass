@@ -188,7 +188,7 @@
 <script type="text/javascript" charset="utf-8">
 
     function OnAuth() {
-        wwpass_auth('${spName}', function (status, response) {
+        wwpass_auth('<spring:eval expression="@wwpassSpName"/>', function (status, response) {
             if (status == WWPass_OK) { //If ticket request handled successfully
                 document.getElementById("ticket").setAttribute("value", response);
                 var f = document.getElementById('fm1');

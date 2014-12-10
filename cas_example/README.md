@@ -1,15 +1,19 @@
 CAS Example
 ============
-An example app, which demonstrates authentication via CAS Single Sign-On Server, and registration to of new WWPass users.
+
+An example app, which demonstrates authentication via CAS Single Sign-On Server, and registration of a new WWPass users.
+
+
 
 Configuration
-=============
-This example app uses the same database as CAS server to load the authorities for a user, once they have been authenticated by CAS.
+---------------
 
-All configuration for example app are separated in file **cas_example/src/main/resources/config.properties**. Rename file 
+This example app uses the same database as CAS server to access the authorities (roles) of a user, once the user has been authenticated by CAS.
+
+All configuration data for the example app are kept in **cas_example/src/main/resources/config.properties** file. Rename the file 
 **cas_example/src/main/resources/config.properties.example** to **cas_example/src/main/resources/config.properties** and open it in a text editor you prefer:
 
-* Edit URLs of example app and CAS server:
+Edit URLs of example app and CAS server:
 
 ``` properties
 # CAS Server application URL
@@ -20,7 +24,7 @@ app.url = https://example.com:8443/cas-example
 ```
 
 
-* Next, change paths to your WWPass certificate/key files and Service Provider's name on which the WWPass certificate was issued:
+Next, change paths to your WWPass certificate/key files and Service Provider's name on which the WWPass certificate was issued:
 
 ``` properties
 # WWPass configuration
@@ -29,7 +33,28 @@ wwpass.sp.cert.path = /etc/ssl/certs/example.com.crt
 wwpass.sp.key.path = /etc/ssl/certs/example.com.key
 ```
 
-* Modify `JDBC configuration` section to configure connection to CAS database:
+
+
+Build
+-----
+
+Now build the example app with Maven:
+
+``` bat
+cd cas_example
+mvn clean package install
+```
+ 
+Basically this is all. 
+
+
+Configuration details 
+---------------------
+
+
+Note that the following part of **cas-example/src/main/resources/config.properties** describes particular MySQL database connection.  
+Modify this block according to your database parameters
+
 
 ``` properties
 # JDBC configuration
@@ -38,7 +63,9 @@ db.url = jdbc:mysql://127.0.0.1/wwpass_cas
 db.username = cas
 db.password = changeit
 ```
-Don't forget to replace dependency of JDBC driver for database type in file **cas_example/pom.xml**, if you using other than MySQL:
+
+
+Don't forget to replace JDBC driver dependency  for database type in file **cas_example/pom.xml**, if you are using Database Management System other than MySQL:
 ``` xml
     <dependency>
         <groupId>mysql</groupId>
@@ -47,16 +74,16 @@ Don't forget to replace dependency of JDBC driver for database type in file **ca
     </dependency>
 ```
 
-Build
-==============
-When you finish configuration, build app with Maven:
-``` bat
-cd cas_example
-mvn clean package
-```
 
-CAS Server configuration
-========================
+
+####CAS Server configuration
+
+Initial CAS server configuration allows any client to be serviced.
+If the your list of CAS clients is restrictive, edit  
+
+**simple-cas4-overlay-template-master/src/main/webapp/WEB-INF/deployerConfigContext.xml**:
+
+
 Configure CAS Server to allow authentication requests from example app. Add bean below into `registeredServicesList` bean:
 
 ``` xml

@@ -38,7 +38,7 @@
        xmlns:p="http://www.springframework.org/schema/p"
        xmlns:c="http://www.springframework.org/schema/c"
        xmlns:tx="http://www.springframework.org/schema/tx"
-       xmlns:util="http://www.springframework.org/schema/util" 
+       xmlns:util="http://www.springframework.org/schema/util"
        xmlns:jdbc="http://www.springframework.org/schema/jdbc"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
@@ -90,6 +90,7 @@
         </property>
     </bean>
 
+
     <!--
        | TODO: Replace this component with one suitable for your enviroment.
        |
@@ -112,12 +113,16 @@
         <constructor-arg name="certFile" value="${wwpass.certPath}"/>
         <constructor-arg name="keyFile" value="${wwpass.keyPath}"/>
     </bean>
-    
+
+    <bean id="wwpassSpName" name="wwpassSpName" class="java.lang.String">
+        <constructor-arg value="${wwpass.sp.name}"/>
+    </bean>
+
     <bean id="jdbcWwpassDAO"
           class="com.wwpass.cas.support.dao.JdbcWwpassDao">
-        <property name="dataSource" ref="dataSource"/>    
+        <property name="dataSource" ref="dataSource"/>
     </bean>
-    
+
     <!-- Required for proxy ticket mechanism -->
     <bean id="proxyPrincipalResolver"
           class="org.jasig.cas.authentication.principal.BasicPrincipalResolver"/>
@@ -173,20 +178,19 @@
         <bean class="org.jasig.cas.services.RegexRegisteredService"
               p:id="0" p:name="HTTP and IMAP" p:description="Allows HTTP(S) and IMAP(S) protocols"
               p:serviceId="^(https?|imaps?)://.*" p:evaluationOrder="10000001"/>
-        
+
         <bean class="org.jasig.cas.services.RegexRegisteredService">
             <property name="id" value="1"/>
             <property name="name" value="cas-example"/>
             <property name="description" value="Example app using CAS authentication"/>
-            <property name="serviceId" value="https://example.com:8443/cas-example"/>
+            <property name="serviceId" value="https://localhost:8443/cas-example"/>
             <property name="enabled" value="true"/>
             <property name="evaluationOrder" value="0"/>
             <property name="attributeFilter">
                 <bean class="org.jasig.cas.services.support.RegisteredServiceRegexAttributeFilter" c:regex="^\w{3}$" />
             </property>
-            
+
         </bean>
-        
         <!--
         Use the following definition instead of the above to further restrict access
         to services within your domain (including sub domains).
