@@ -13,7 +13,7 @@ Installation & Configuration
 ============================
 
 ### Create a WWPass Developer Account
-Signup for a free account on [WWPass developers website](https://developers.wwpass.com/) and follow the [getting started](https://developers.wwpass.com/documentation) instructions to obtain WWPass authorization credentials (WWPass certificate file and a private key file) for your CAS server: . 
+Signup for a free account on [WWPass developers website](https://developers.wwpass.com/) and follow the [getting started](https://developers.wwpass.com/documentation) instructions to obtain WWPass credentials (WWPass certificate file and a private key file) for your CAS server: . 
 
 ### Build the server extension
 
